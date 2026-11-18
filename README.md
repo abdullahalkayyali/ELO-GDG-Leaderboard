@@ -158,12 +158,19 @@ Open `/?display=1`, or choose **Big screen** on the public page. This is a prese
 
 ## Deploying on Vercel
 
-Deploy it the same way as the kickoff leaderboard, as a **separate** Vercel project with its own database so the two events' scores stay apart:
+The app is deployed from `abdullahalkayyali/ELO-GDG-Leaderboard`; every push to `main` redeploys it.
 
-1. In Vercel, choose **Add New → Project** and import `abdullahalkayyali/ELO-GDG-Leaderboard` (framework: Next.js; `vercel.json` already sets it). Every push to `main` then redeploys.
-2. In the project, open **Storage** and connect a new Neon Postgres database. This sets `DATABASE_URL`.
-3. Add the organizer variables from `.env.example`: `ORGANIZER_USERNAME`, `ORGANIZER_PASSWORD_HASH`, `ORGANIZER_SESSION_SECRET` (generate them with `npx tsx scripts/setup-auth.ts`). Set `DEMO_MODE=false` and `SUBMISSIONS_OPEN=true`.
-4. Create the tables once: pull the env locally (`vercel env pull .env.local`) and run `npm run db:setup`.
-5. Deploy. Give each booth its endpoint URL from the table above.
+Environment variables (Project → Settings → Environment Variables):
 
-The schema is new for this event (four booths, a `submissions` counter for the AI booth), so don't point this app at the kickoff database.
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | Set automatically when a Neon database is connected under **Storage** |
+| `ORGANIZER_USERNAME` | Organizer login name |
+| `ORGANIZER_PASSWORD_HASH` | `scrypt:<salt>:<hash>` from `npx tsx scripts/setup-auth.ts` |
+| `ORGANIZER_SESSION_SECRET` | Random secret from the same script |
+| `DEMO_MODE` | `false` |
+| `SUBMISSIONS_OPEN` | `true` during the event; `false` to freeze the boards |
+
+The tables are created automatically the first time the app talks to the database, so a freshly connected Neon database needs no setup step. (`npm run db:setup` does the same from your machine.) After connecting the database or changing any variable, redeploy so the new values take effect.
+
+This app needs its own database; don't point it at the kickoff leaderboard's database.

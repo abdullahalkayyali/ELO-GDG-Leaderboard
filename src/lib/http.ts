@@ -25,5 +25,5 @@ export function errorResponse(error: unknown) {
   if (error instanceof AppError) return json({ error: error.message }, error.status);
   // Do not log database error objects: they can include connection details or query parameters.
   console.error("Leaderboard operation failed", error instanceof Error ? error.name : "UnknownError");
-  return json({ error: "The database is temporarily unavailable. Check its connection and run npm run db:setup if needed." }, 503);
+  return json({ error: "The database is temporarily unavailable. Check that DATABASE_URL is set and the database is reachable." }, 503);
 }

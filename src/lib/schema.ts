@@ -1,3 +1,5 @@
+// Database schema. Every statement is idempotent, so it is safe to run on every cold start.
+export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS teams (
   id UUID PRIMARY KEY,
   name TEXT NOT NULL,
@@ -24,3 +26,5 @@ CREATE TABLE IF NOT EXISTS attempts (
 
 CREATE UNIQUE INDEX IF NOT EXISTS one_valid_result_per_booth ON attempts(team_id, booth) WHERE voided_at IS NULL;
 CREATE INDEX IF NOT EXISTS attempts_created_at ON attempts(created_at DESC);
+`;
+export const SCHEMA_STATEMENTS = SCHEMA.split(";").map(s => s.trim()).filter(Boolean);

@@ -1,17 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { BOOTHS, getBooth } from "../src/lib/config";
 import { AppError, normalizeName, parseSubmission } from "../src/lib/scoring";
 import { deleteAttemptLog, readOrganizerData, readResults, renameTeam, resetLeaderboard, snapshot, submit, voidAttempt, wipeLogs, wipeTeams } from "../src/lib/store";
 import { idempotencyKey, jsonBody } from "../src/lib/http";
-import type { Query } from "../src/lib/db";
+import { ensureSchema, type Query } from "../src/lib/db";
+import { SCHEMA } from "../src/lib/schema";
 
 async function withDb(run: (query: Query) => Promise<void>) {
   const db = new PGlite();
   try {
-    await db.exec(await readFile(new URL("../db/schema.sql", import.meta.url), "utf8"));
+    await db.exec(SCHEMA);
     await run(async (text, params) => (await db.query<Record<string, unknown>>(text, params)).rows);
   } finally { await db.close(); }
 }
@@ -152,4 +152,15 @@ test("HTTP guards reject oversized and malformed JSON", async () => {
   await assert.rejects(jsonBody(new Request("http://localhost", { method: "POST", headers: { "content-type": "application/json" }, body: "{" })), /Invalid JSON/);
   await assert.rejects(jsonBody(new Request("http://localhost", { method: "POST", headers: { "content-type": "application/json" }, body: "a".repeat(5000) })), /too large/);
   assert.throws(() => idempotencyKey(new Request("http://localhost", { headers: { "idempotency-key": "bad key" } })), /Idempotency/);
+});
+
+test("schema setup creates the tables on a fresh database and is safe to repeat", async () => {
+  const db = new PGlite();
+  try {
+    const query: Query = async (text, params) => (await db.query<Record<string, unknown>>(text, params)).rows;
+    await ensureSchema(query);
+    for (const statement of SCHEMA.split(";").map(s => s.trim()).filter(Boolean)) await query(statement);
+    const saved = await submit(query, getBooth("cys")!, parseSubmission({ teamName: "Fresh Team", points: 10 }, getBooth("cys")!), null);
+    assert.equal(saved.created, true);
+  } finally { await db.close(); }
 });

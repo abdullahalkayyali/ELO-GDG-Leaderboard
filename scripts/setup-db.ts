@@ -1,9 +1,7 @@
 import nextEnv from "@next/env";
-import { readFile } from "node:fs/promises";
 import { database } from "../src/lib/db";
 
+// The app creates missing tables on its first query, so this script only needs to run one query.
 nextEnv.loadEnvConfig(process.cwd());
-const schema = await readFile(new URL("../db/schema.sql", import.meta.url), "utf8");
-const query = database();
-for (const statement of schema.split(";").map(s => s.trim()).filter(Boolean)) await query(statement);
+await database()("SELECT 1");
 console.log("Database schema is ready. No existing results were removed.");
