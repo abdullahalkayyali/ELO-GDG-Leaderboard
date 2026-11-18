@@ -1,0 +1,11 @@
+.git/
+.next/
+.npm-cache/
+.vercel/
+node_modules/
+test-results/
+AGENTS.md
+skills/
+*.tsbuildinfo
+.env*
+!.env.example

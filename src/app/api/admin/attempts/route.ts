@@ -1,0 +1,32 @@
+import { getBooth } from "@/lib/config";
+import { database, demoMode } from "@/lib/db";
+import { errorResponse, idempotencyKey, json, jsonBody } from "@/lib/http";
+import { demoResults } from "@/lib/demo";
+import { AppError, parseSubmission } from "@/lib/scoring";
+import { readOrganizerData, submit } from "@/lib/store";
+import { requireOrganizer } from "@/lib/organizer-auth";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export async function GET(request: Request) {
+  try {
+    await requireOrganizer(request);
+    if (!demoMode()) return json({ ...await readOrganizerData(database()), demo: false });
+    const attempts = demoResults();
+    const teams = new Map(attempts.map(({ teamId, teamName }) => [teamId, { id: teamId, name: teamName }]));
+    return json({ attempts, teams: [...teams.values()], demo: true });
+  } catch (error) { return errorResponse(error); }
+}
+export async function POST(request: Request) {
+  try {
+    await requireOrganizer(request);
+    if (demoMode()) throw new AppError(403, "Demo mode is readonly.");
+    const raw = await jsonBody(request) as Record<string, unknown> | null;
+    const booth = getBooth(String(raw?.booth ?? ""));
+    if (!booth) throw new AppError(400, "Choose a valid booth.");
+    const { booth: ignored, ...body } = raw!; void ignored;
+    const data = parseSubmission(body, booth);
+    const key = idempotencyKey(request);
+    const saved = await submit(database(), booth, data, key, { organizer: true });
+    return json(saved, saved.created ? 201 : 200);
+  } catch (error) { return errorResponse(error); }
+}
