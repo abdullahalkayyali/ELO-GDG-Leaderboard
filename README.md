@@ -1,5 +1,7 @@
 # AI Open Day Leaderboard (GDG HTU × ELO)
 
+**Live site:** https://elo-gdg-leaderboard.vercel.app (big screen: https://elo-gdg-leaderboard.vercel.app/?display=1, organizers: https://elo-gdg-leaderboard.vercel.app/admin)
+
 Live leaderboard for AI Open Day. Two clubs run booth games:
 
 | Club | Game | Booth id |
@@ -158,7 +160,7 @@ Open `/?display=1`, or choose **Big screen** on the public page. This is a prese
 
 ## Deploying on Vercel
 
-The app is deployed from `abdullahalkayyali/ELO-GDG-Leaderboard`; every push to `main` redeploys it.
+The app is deployed as the Vercel project `elo-gdg-leaderboard` from `abdullahalkayyali/ELO-GDG-Leaderboard`; every push to `main` redeploys it. Deployment Protection (Vercel Authentication) is off so visitors and booth games can reach it without a Vercel login; keep it off.
 
 Environment variables (Project → Settings → Environment Variables):
 
